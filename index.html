@@ -2,40 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title><h1>Anime Finder</h1>
-<p class="subtitle">Discover anime made for your taste</p></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Anime Finder</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div class="app">
+  <div class="app">
+    <div class="screen-container">
 
-  <!-- INTRO -->
-  <div id="intro" class="fade">
-    <h1>Anime Finder 🎌</h1>
-    <p>
-      Answer a few questions and we’ll recommend anime
-      perfectly matching your taste.
-    </p>
-    <button onclick="startQuiz()">Start Quiz</button>
-  </div>
+      <!-- INTRO -->
+      <div id="intro" class="screen active">
+        <h1>Anime Finder 🎌</h1>
+        <p class="subtitle">
+          Answer a few questions and we’ll recommend anime
+          based on your taste.
+        </p>
+        <button onclick="startQuiz()">Start</button>
+      </div>
 
-  <!-- QUIZ -->
-  <div id="quiz" class="hidden fade">
-    <div class="progress">
-      <div id="progress-bar"></div>
+      <!-- QUIZ -->
+      <div id="quiz" class="screen">
+        <div class="progress">
+          <div id="progress-bar"></div>
+        </div>
+
+        <p id="question"></p>
+        <div id="options"></div>
+      </div>
+
+      <!-- RESULT -->
+      <div id="result" class="screen"></div>
+
     </div>
-
-    <p id="question"></p>
-    <div id="options"></div>
-    <button id="nextBtn">Next</button>
   </div>
 
-  <!-- RESULTS -->
-  <div id="result" class="hidden fade"></div>
-
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
