@@ -1,90 +1,63 @@
-let currentQuestion = 0;
-
-let userProfile = {
-  action: 0,
-  romance: 0,
-  dark: 0,
-  comedy: 0
-};
-
-const genreMap = {
-  action: "Action",
-  romance: "Romance",
-  dark: "Psychological",
-  comedy: "Comedy"
-};
-
 const questions = [
   {
-    q: "What do you enjoy the most?",
+    text: "What kind of anime do you prefer?",
     options: [
-      { text: "🔥 Intense fights", scores: { action: 3 } },
-      { text: "💔 Emotional stories", scores: { romance: 3 } },
-      { text: "🌑 Dark themes", scores: { dark: 3 } },
-      { text: "😂 Comedy", scores: { comedy: 3 } }
+      { text: "Action", tag: "ACTION" },
+      { text: "Romance", tag: "ROMANCE" },
+      { text: "Comedy", tag: "COMEDY" },
+      { text: "Dark", tag: "PSYCHOLOGICAL" }
     ]
   },
   {
-    q: "Pick a vibe:",
+    text: "How long should the anime be?",
     options: [
-      { text: "Fast & hype", scores: { action: 2 } },
-      { text: "Deep & emotional", scores: { romance: 2 } },
-      { text: "Serious & dark", scores: { dark: 2 } },
-      { text: "Chill & funny", scores: { comedy: 2 } }
+      { text: "Short (12-24)", tag: "SHORT" },
+      { text: "Long (50+)", tag: "LONG" }
     ]
   },
   {
-    q: "How dark can it get?",
+    text: "Do you like emotional stories?",
     options: [
-      { text: "Very dark", scores: { dark: 3 } },
-      { text: "Moderate", scores: { dark: 1 } },
-      { text: "Keep it light", scores: {} }
-    ]
-  },
-  {
-    q: "Comedy level?",
-    options: [
-      { text: "A lot 😂", scores: { comedy: 3 } },
-      { text: "Some", scores: { comedy: 1 } },
-      { text: "None", scores: {} }
+      { text: "Yes", tag: "DRAMA" },
+      { text: "No", tag: "LIGHT" }
     ]
   }
 ];
 
-document.getElementById("nextBtn").onclick = nextQuestion;
+let currentQuestion = 0;
+let selectedTags = [];
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
 
 function startQuiz() {
-  document.getElementById("intro").classList.add("hidden");
-  document.getElementById("quiz").classList.remove("hidden");
+  currentQuestion = 0;
+  selectedTags = [];
+  showScreen("quiz");
   loadQuestion();
 }
 
 function loadQuestion() {
   const q = questions[currentQuestion];
-  document.getElementById("question").innerText = q.q;
-  updateProgress();
+  document.getElementById("question").innerText = q.text;
 
   const optionsDiv = document.getElementById("options");
   optionsDiv.innerHTML = "";
 
-  q.options.forEach(option => {
-    const div = document.createElement("div");
-    div.className = "option";
-    div.innerText = option.text;
-    div.onclick = () => selectOption(option.scores);
-    optionsDiv.appendChild(div);
+  q.options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.innerText = opt.text;
+    btn.onclick = () => {
+      selectedTags.push(opt.tag);
+      nextQuestion();
+    };
+    optionsDiv.appendChild(btn);
   });
-}
 
-function updateProgress() {
-  const progress = (currentQuestion / questions.length) * 100;
-  document.getElementById("progress-bar").style.width = progress + "%";
-}
-
-function selectOption(scores) {
-  for (let key in scores) {
-    userProfile[key] += scores[key];
-  }
+  document.getElementById("progress-bar").style.width =
+    ((currentQuestion) / questions.length) * 100 + "%";
 }
 
 function nextQuestion() {
@@ -92,114 +65,54 @@ function nextQuestion() {
   if (currentQuestion < questions.length) {
     loadQuestion();
   } else {
-    getRecommendations();
+    document.getElementById("progress-bar").style.width = "100%";
+    fetchAnime();
   }
 }
 
-/* =========================
-   SMART RECOMMENDATION
-========================= */
+async function fetchAnime() {
+  showScreen("result");
 
-async function getRecommendations() {
-  document.getElementById("quiz").innerHTML =
-    "<p>Analyzing your taste… 🎯</p>";
+  const resultDiv = document.getElementById("result");
+  resultDiv.innerHTML = "<h2>Your Anime Matches 🎌</h2>";
 
-  const topPrefs = Object.entries(userProfile)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
+  const genre = selectedTags[0] || "ACTION";
 
-  let allAnime = [];
-
-  for (let [pref] of topPrefs) {
-    const anime = await fetchAnimeByGenre(genreMap[pref]);
-    allAnime.push(...anime);
-  }
-
-  const scored = scoreAnime(allAnime);
-  showResults(scored.slice(0, 6));
-}
-
-async function fetchAnimeByGenre(genre) {
   const query = `
-  query ($genre: String) {
-    Page(perPage: 10) {
-      media(type: ANIME, genre: $genre, sort: POPULARITY_DESC) {
-        id
-        title { romaji }
-        genres
-        averageScore
-        coverImage { large }
+    query {
+      Page(perPage: 8) {
+        media(type: ANIME, genre: "${genre}", sort: POPULARITY_DESC) {
+          title { romaji }
+          coverImage { large }
+          averageScore
+        }
       }
     }
-  }`;
+  `;
 
   const res = await fetch("https://graphql.anilist.co", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query,
-      variables: { genre }
-    })
+    body: JSON.stringify({ query })
   });
 
   const data = await res.json();
-  return data.data.Page.media;
-}
 
-function scoreAnime(animeList) {
-  const unique = {};
-
-  animeList.forEach(anime => {
-    if (!unique[anime.id]) {
-      let score = anime.averageScore || 50;
-
-      anime.genres.forEach(g => {
-        for (let key in genreMap) {
-          if (genreMap[key] === g) {
-            score += userProfile[key] * 5;
-          }
-        }
-      });
-
-      unique[anime.id] = { ...anime, finalScore: score };
-    }
-  });
-
-  return Object.values(unique).sort(
-    (a, b) => b.finalScore - a.finalScore
-  );
-}
-
-/* =========================
-   RESULTS + RESTART
-========================= */
-
-function showResults(animeList) {
-  const resultDiv = document.getElementById("result");
-  resultDiv.classList.remove("hidden");
-
-  resultDiv.innerHTML = `
-    <h2>Your Anime Matches 🎌</h2>
-    <button onclick="restartQuiz()">Restart Quiz 🔄</button>
-  `;
-
-  animeList.forEach(anime => {
+  data.data.Page.media.forEach(anime => {
     resultDiv.innerHTML += `
       <div class="result-card">
         <img src="${anime.coverImage.large}">
         <div class="result-info">
-          <strong>${anime.title.romaji}</strong>
+          <strong>${anime.title.romaji}</strong><br>
           ⭐ ${anime.averageScore || "N/A"}
         </div>
       </div>
     `;
   });
+
+  resultDiv.innerHTML += `<button style="margin-top:16px" onclick="restartQuiz()">Restart 🔄</button>`;
 }
 
 function restartQuiz() {
-  currentQuestion = 0;
-  userProfile = { action: 0, romance: 0, dark: 0, comedy: 0 };
-
-  document.getElementById("result").classList.add("hidden");
-  document.getElementById("intro").classList.remove("hidden");
+  showScreen("intro");
 }
