@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title><h1>Anime Finder</h1>
+<p class="subtitle">Discover anime made for your taste</p></title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- INTRO -->
+  <div id="intro" class="fade">
+    <h1>Anime Finder 🎌</h1>
+    <p>
+      Answer a few questions and we’ll recommend anime
+      perfectly matching your taste.
+    </p>
+    <button onclick="startQuiz()">Start Quiz</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="hidden fade">
+    <div class="progress">
+      <div id="progress-bar"></div>
+    </div>
+
+    <p id="question"></p>
+    <div id="options"></div>
+    <button id="nextBtn">Next</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="result" class="hidden fade"></div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
