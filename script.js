@@ -1,118 +1,113 @@
+// 10 QUESTIONS
 const questions = [
-  {
-    text: "What kind of anime do you prefer?",
-    options: [
-      { text: "Action", tag: "ACTION" },
-      { text: "Romance", tag: "ROMANCE" },
-      { text: "Comedy", tag: "COMEDY" },
-      { text: "Dark", tag: "PSYCHOLOGICAL" }
-    ]
-  },
-  {
-    text: "How long should the anime be?",
-    options: [
-      { text: "Short (12-24)", tag: "SHORT" },
-      { text: "Long (50+)", tag: "LONG" }
-    ]
-  },
-  {
-    text: "Do you like emotional stories?",
-    options: [
-      { text: "Yes", tag: "DRAMA" },
-      { text: "No", tag: "LIGHT" }
-    ]
-  }
+  { q: "What type of anime do you like?", options: ["Action", "Romance", "Comedy", "Dark"] },
+  { q: "How long should the anime be?", options: ["Short (12-24 eps)", "Medium (25-49 eps)", "Long (50+ eps)"] },
+  { q: "Do you like emotional stories?", options: ["Yes", "No"] },
+  { q: "Do you prefer a serious or light-hearted tone?", options: ["Serious", "Light"] },
+  { q: "Do you like fantasy settings?", options: ["Yes", "No"] },
+  { q: "Do you prefer modern-day or historical setting?", options: ["Modern", "Historical"] },
+  { q: "Do you enjoy romance subplots?", options: ["Yes", "No"] },
+  { q: "Do you like action-packed fights?", options: ["Yes", "No"] },
+  { q: "Do you enjoy psychological themes?", options: ["Yes", "No"] },
+  { q: "Do you prefer anime targeted for teens or adults?", options: ["Teens", "Adults"] }
 ];
 
 let currentQuestion = 0;
-let selectedTags = [];
+let selectedTag = ""; // first question decides main genre
 
-function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
+// ELEMENTS
+const intro = document.getElementById("intro");
+const startBtn = document.getElementById("startBtn");
+const quiz = document.getElementById("quiz");
+const questionEl = document.getElementById("question");
+const optionsEl = document.getElementById("options");
+const result = document.getElementById("result");
+const animeList = document.getElementById("animeList");
+const restartBtn = document.getElementById("restartBtn");
 
-function startQuiz() {
+// START QUIZ
+startBtn.addEventListener("click", () => {
+  intro.style.display = "none";
+  quiz.style.display = "block";
   currentQuestion = 0;
-  selectedTags = [];
-  showScreen("quiz");
-  loadQuestion();
-}
+  selectedTag = "";
+  showQuestion();
+});
 
-function loadQuestion() {
+// SHOW QUESTION
+function showQuestion() {
   const q = questions[currentQuestion];
-  document.getElementById("question").innerText = q.text;
-
-  const optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML = "";
+  questionEl.textContent = q.q;
+  optionsEl.innerHTML = "";
 
   q.options.forEach(opt => {
     const btn = document.createElement("button");
-    btn.innerText = opt.text;
-    btn.onclick = () => {
-      selectedTags.push(opt.tag);
+    btn.textContent = opt;
+    btn.addEventListener("click", () => {
+      if (currentQuestion === 0) selectedTag = opt; // first question decides main tag
       nextQuestion();
-    };
-    optionsDiv.appendChild(btn);
+    });
+    optionsEl.appendChild(btn);
   });
-
-  document.getElementById("progress-bar").style.width =
-    ((currentQuestion) / questions.length) * 100 + "%";
 }
 
+// NEXT QUESTION
 function nextQuestion() {
   currentQuestion++;
   if (currentQuestion < questions.length) {
-    loadQuestion();
+    showQuestion();
   } else {
-    document.getElementById("progress-bar").style.width = "100%";
-    fetchAnime();
+    quiz.style.display = "none";
+    fetchAnime(selectedTag);
   }
 }
 
-async function fetchAnime() {
-  showScreen("result");
-
-  const resultDiv = document.getElementById("result");
-  resultDiv.innerHTML = "<h2>Your Anime Matches 🎌</h2>";
-
-  const genre = selectedTags[0] || "ACTION";
+// FETCH ANIME FROM AniList
+async function fetchAnime(tag) {
+  result.style.display = "block";
+  animeList.innerHTML = "<p>Loading...</p>";
 
   const query = `
-    query {
-      Page(perPage: 8) {
-        media(type: ANIME, genre: "${genre}", sort: POPULARITY_DESC) {
-          title { romaji }
-          coverImage { large }
-          averageScore
-        }
+  query ($genre: String) {
+    Page(perPage: 6) {
+      media(type: ANIME, genre: $genre, sort: POPULARITY_DESC) {
+        title { romaji }
+        coverImage { large }
+        averageScore
       }
     }
-  `;
+  }`;
 
-  const res = await fetch("https://graphql.anilist.co", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query })
-  });
+  try {
+    const res = await fetch("https://graphql.anilist.co", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables: { genre: tag.toUpperCase() } })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
+    animeList.innerHTML = "";
 
-  data.data.Page.media.forEach(anime => {
-    resultDiv.innerHTML += `
-      <div class="result-card">
-        <img src="${anime.coverImage.large}">
-        <div class="result-info">
+    data.data.Page.media.forEach(anime => {
+      const div = document.createElement("div");
+      div.className = "anime-item";
+      div.innerHTML = `
+        <img src="${anime.coverImage.large}" />
+        <div>
           <strong>${anime.title.romaji}</strong><br>
           ⭐ ${anime.averageScore || "N/A"}
         </div>
-      </div>
-    `;
-  });
-
-  resultDiv.innerHTML += `<button style="margin-top:16px" onclick="restartQuiz()">Restart 🔄</button>`;
+      `;
+      animeList.appendChild(div);
+    });
+  } catch (err) {
+    animeList.innerHTML = "<p>Error fetching anime. Try again.</p>";
+    console.error(err);
+  }
 }
 
-function restartQuiz() {
-  showScreen("intro");
-}
+// RESTART
+restartBtn.addEventListener("click", () => {
+  result.style.display = "none";
+  intro.style.display = "block";
+});
