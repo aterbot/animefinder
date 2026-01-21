@@ -159,3 +159,8 @@ button:active {
 .hidden {
   display: none;
 }
+#intro,
+#quiz,
+#result {
+  animation: fadeUp 0.4s ease forwards;
+}
