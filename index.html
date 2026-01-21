@@ -4,39 +4,34 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Anime Finder</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="app">
-    <div class="screen-container">
+<div class="app">
 
-      <!-- INTRO -->
-      <div id="intro" class="screen active">
-        <h1>Anime Finder 🎌</h1>
-        <p class="subtitle">
-          Answer a few questions and we’ll recommend anime
-          based on your taste.
-        </p>
-        <button onclick="startQuiz()">Start</button>
-      </div>
-
-      <!-- QUIZ -->
-      <div id="quiz" class="screen">
-        <div class="progress">
-          <div id="progress-bar"></div>
-        </div>
-
-        <p id="question"></p>
-        <div id="options"></div>
-      </div>
-
-      <!-- RESULT -->
-      <div id="result" class="screen"></div>
-
-    </div>
+  <!-- INTRO -->
+  <div id="intro">
+    <h1>Anime Finder</h1>
+    <p>Answer a few questions and get anime recommendations.</p>
+    <button id="startBtn">Start</button>
   </div>
 
-  <script src="script.js"></script>
+  <!-- QUIZ -->
+  <div id="quiz" style="display:none;">
+    <p id="question"></p>
+    <div id="options"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result" style="display:none;">
+    <h2>Recommended Anime</h2>
+    <div id="animeList"></div>
+    <button id="restartBtn">Restart</button>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
